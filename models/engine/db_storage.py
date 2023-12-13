@@ -7,12 +7,14 @@ import models
 from models.base_model import BaseModel, Base
 from models.recipe import Recipe
 from models.category import Category
+from models.favorite import Favorites
+from models.user import User
 from os import getenv
 import sqlalchemy
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 
-classes = {"Recipe": Recipe, "category":Category}
+classes = {"Recipe": Recipe, "category":Category, "Favorites":Favorites ,"User":User}
 
 
 class DBStorage:
@@ -65,6 +67,14 @@ class DBStorage:
             key = obj.__class__.__name__ + '.' + str(obj.id)
             new_dict[key] = obj
         return (new_dict)
+    
+    def getuserfavorites(self,user_id):
+        recipes = self.__session.query(Recipe).join(Favorites).filter(Favorites.user_id == user_id).all()
+        new_dict = {}
+        for obj in recipes:
+            key = obj.__class__.__name__ + '.' + str(obj.id)
+            new_dict[key] = obj
+        return (new_dict)
 
     def close(self):
         """call remove() method on the private session attribute"""
@@ -75,14 +85,9 @@ class DBStorage:
         Returns the object based on the class name and its ID, or
         None if not found
         """
-        if cls not in classes.values():
-            return None
-
-        all_cls = models.storage.all(cls)
-        for value in all_cls.values():
-            if (value.id == id):
-                return value
-
+        result = self.__session.query(cls).get(id)
+        if(result):
+            return result
         return None
 
    
